@@ -35,6 +35,13 @@ type PatchCompany struct {
 	Type              *CompanyType `json:"type,omitempty" validate:"omitempty,companyType"`
 }
 
+type OutboxEvent struct {
+	ID        uuid.UUID `json:"id"`
+	EventType string    `json:"event_type"`
+	Payload   []byte    `json:"payload"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 var validate *validator.Validate
 
 func init() {
@@ -61,11 +68,13 @@ func (pc *PatchCompany) Validate() error {
 }
 
 type CompanyRepository interface {
-	Create(ctx context.Context, company *Company) error
-	Update(ctx context.Context, company *Company) error
+	CreateWithOutboxEvent(ctx context.Context, company *Company, event *OutboxEvent) error
+	UpdateWithOutboxEvent(ctx context.Context, company *Company, event *OutboxEvent) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Company, error)
 	GetByName(ctx context.Context, name string) (*Company, error)
+	GetOutboxEvents(ctx context.Context, limit int) ([]*OutboxEvent, error)
+	DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error
 }
 
 type CompanyUseCase interface {

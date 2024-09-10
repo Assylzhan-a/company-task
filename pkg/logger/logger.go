@@ -1,5 +1,3 @@
-// pkg/logger/logger.go
-
 package logger
 
 import (
@@ -7,15 +5,14 @@ import (
 	"os"
 )
 
-var log *slog.Logger
+type Logger struct {
+	*slog.Logger
+}
 
-func InitLogger(logLevel string) {
+func NewLogger(logLevel string) *Logger {
 	level := getLogLevel(logLevel)
-	opts := &slog.HandlerOptions{
-		Level: level,
-	}
-	handler := slog.NewJSONHandler(os.Stdout, opts)
-	log = slog.New(handler)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
+	return &Logger{slog.New(handler)}
 }
 
 func getLogLevel(logLevel string) slog.Level {
@@ -33,18 +30,22 @@ func getLogLevel(logLevel string) slog.Level {
 	}
 }
 
-func Info(msg string, args ...any) {
-	log.Info(msg, args...)
+// Info logs an info level message
+func (l *Logger) Info(msg string, args ...any) {
+	l.Logger.Info(msg, args...)
 }
 
-func Error(msg string, args ...any) {
-	log.Error(msg, args...)
+// Error logs an error level message
+func (l *Logger) Error(msg string, args ...any) {
+	l.Logger.Error(msg, args...)
 }
 
-func Debug(msg string, args ...any) {
-	log.Debug(msg, args...)
+// Debug logs a debug level message
+func (l *Logger) Debug(msg string, args ...any) {
+	l.Logger.Debug(msg, args...)
 }
 
-func Warn(msg string, args ...any) {
-	log.Warn(msg, args...)
+// Warn logs a warn level message
+func (l *Logger) Warn(msg string, args ...any) {
+	l.Logger.Warn(msg, args...)
 }

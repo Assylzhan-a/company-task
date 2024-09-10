@@ -1,5 +1,3 @@
-// internal/company/delivery/handler/company_handler.go
-
 package handler
 
 import (

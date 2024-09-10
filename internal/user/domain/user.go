@@ -1,5 +1,3 @@
-// internal/user/domain/user.go
-
 package domain
 
 import (

@@ -1,11 +1,10 @@
-// cmd/api/main.go
-
 package main
 
 import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/assylzhan-a/company-task/pkg/logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,26 +20,27 @@ import (
 	companyRepository "github.com/assylzhan-a/company-task/internal/company/repository"
 	companyUsecase "github.com/assylzhan-a/company-task/internal/company/usecase"
 	"github.com/assylzhan-a/company-task/internal/db"
+	"github.com/assylzhan-a/company-task/internal/kafka"
 	userHandler "github.com/assylzhan-a/company-task/internal/user/delivery/handler"
 	userRepository "github.com/assylzhan-a/company-task/internal/user/repository"
 	userUsecase "github.com/assylzhan-a/company-task/internal/user/usecase"
+	"github.com/assylzhan-a/company-task/internal/worker"
 	"github.com/assylzhan-a/company-task/pkg/config"
-	"github.com/assylzhan-a/company-task/pkg/logger"
 )
 
 func main() {
 	cfg := config.Load()
 
-	logger.InitLogger(cfg.LogLevel)
+	log := logger.NewLogger(cfg.LogLevel)
 
 	// Parse command line flags
 	migrateFlag := flag.Bool("migrate", false, "Run database migrations")
 	flag.Parse()
 
 	// Connect to the database
-	dbPool, err := db.NewPostgresConnection(cfg.DatabaseURL)
+	dbPool, err := db.NewPostgresConnection(cfg.DatabaseURL, log)
 	if err != nil {
-		logger.Error("Failed to connect to database", "error", err)
+		log.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
 	defer dbPool.Close()
@@ -48,20 +48,32 @@ func main() {
 	// Run migrations if the flag is set
 	if *migrateFlag {
 		if err := db.RunMigrations(cfg.DatabaseURL); err != nil {
-			logger.Error("Failed to run migrations", "error", err)
+			log.Error("Failed to run migrations", "error", err)
 			os.Exit(1)
 		}
-		logger.Info("Migrations completed successfully")
+		log.Info("Migrations completed successfully")
 		return
 	}
 
+	// Initialize repositories
 	companyRepo := companyRepository.NewPostgresRepository(dbPool)
-	companyUseCase := companyUsecase.NewCompanyUseCase(companyRepo)
-	companyHandler := companyHandler.NewCompanyHandler(companyUseCase)
-
 	userRepo := userRepository.NewPostgresUserRepository(dbPool)
+
+	// Initialize Kafka producer
+	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers, log)
+	defer kafkaProducer.Close()
+
+	// Initialize use cases
+	companyUseCase := companyUsecase.NewCompanyUseCase(companyRepo, log)
 	userUseCase := userUsecase.NewUserUseCase(userRepo)
+
+	// Initialize handlers
+	companyHandler := companyHandler.NewCompanyHandler(companyUseCase)
 	userHandler := userHandler.NewUserHandler(userUseCase)
+
+	// Initialize and start outbox worker
+	outboxWorker := worker.NewOutboxWorker(companyRepo, kafkaProducer, log)
+	go outboxWorker.Start(context.Background())
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -92,9 +104,9 @@ func main() {
 
 	// Start server
 	go func() {
-		logger.Info("Starting server", "address", cfg.ServerAddress)
+		log.Info("Starting server", "address", cfg.ServerAddress)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Server failed to start", "error", err)
+			log.Error("Server failed to start", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -103,15 +115,15 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	logger.Info("Shutting down server...")
+	log.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Error("Server forced to shutdown", "error", err)
+		log.Error("Server forced to shutdown", "error", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Server exiting")
+	log.Info("Server exiting")
 }

@@ -1,5 +1,3 @@
-// internal/user/repository/postgres_repository.go
-
 package repository
 
 import (
