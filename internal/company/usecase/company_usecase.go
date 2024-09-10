@@ -19,7 +19,6 @@ func NewCompanyUseCase(repo domain.CompanyRepository, logger *logger.Logger) dom
 }
 
 func (uc *companyUseCase) Create(ctx context.Context, company *domain.Company) error {
-	company.ID = uuid.New()
 	company.CreatedAt = time.Now()
 	company.UpdatedAt = time.Now()
 
