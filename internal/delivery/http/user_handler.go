@@ -30,12 +30,13 @@ func NewUserHandler(r *chi.Mux, userUseCase uc.UserUseCase) {
 
 func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
+	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
 		return
 	}
 
-	if err := h.UserUseCase.Register(req.Username, req.Password); err != nil {
+	if err := h.UserUseCase.Register(ctx, req.Username, req.Password); err != nil {
 		switch err {
 		case entity.ErrEmptyUsername, entity.ErrEmptyPassword:
 			errors.RespondWithError(w, errors.NewBadRequestError(err.Error()))
@@ -53,12 +54,13 @@ func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
+	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
 		return
 	}
 
-	token, err := h.UserUseCase.Login(req.Username, req.Password)
+	token, err := h.UserUseCase.Login(ctx, req.Username, req.Password)
 	if err != nil {
 		switch err {
 		case entity.ErrEmptyUsername, entity.ErrEmptyPassword, entity.ErrInvalidCredentials:

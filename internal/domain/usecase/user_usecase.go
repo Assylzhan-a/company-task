@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/assylzhan-a/company-task/config"
@@ -21,13 +22,13 @@ func NewUserUseCase(userRepo r.UserRepository) uc.UserUseCase {
 	}
 }
 
-func (u *userUseCase) Register(username, password string) error {
+func (u *userUseCase) Register(ctx context.Context, username, password string) error {
 	user, err := entity.NewUser(username, password)
 	if err != nil {
 		return err
 	}
 
-	err = u.userRepo.Create(user)
+	err = u.userRepo.Create(ctx, user)
 	if err != nil {
 		if errors.Is(err, entity.ErrUsernameTaken) {
 			return err
@@ -37,8 +38,8 @@ func (u *userUseCase) Register(username, password string) error {
 	return nil
 }
 
-func (u *userUseCase) Login(username, password string) (string, error) {
-	user, err := u.userRepo.GetByUsername(username)
+func (u *userUseCase) Login(ctx context.Context, username, password string) (string, error) {
+	user, err := u.userRepo.GetByUsername(ctx, username)
 	if err != nil {
 		return "", entity.ErrInvalidCredentials
 	}

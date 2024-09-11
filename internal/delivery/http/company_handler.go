@@ -33,6 +33,8 @@ func NewCompanyHandler(r *chi.Mux, useCase uc.CompanyUseCase) {
 
 func (h *companyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var company entity.Company
+	ctx := r.Context()
+
 	if err := json.NewDecoder(r.Body).Decode(&company); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
 		return
@@ -43,7 +45,7 @@ func (h *companyHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.companyUseCase.Create(r.Context(), &company); err != nil {
+	if err := h.companyUseCase.Create(ctx, &company); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -53,6 +55,8 @@ func (h *companyHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *companyHandler) Patch(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
@@ -70,7 +74,7 @@ func (h *companyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.companyUseCase.Patch(r.Context(), id, &patchCompany); err != nil {
+	if err := h.companyUseCase.Patch(ctx, id, &patchCompany); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -80,13 +84,14 @@ func (h *companyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *companyHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
 		return
 	}
 
-	if err := h.companyUseCase.Delete(r.Context(), id); err != nil {
+	if err := h.companyUseCase.Delete(ctx, id); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -95,13 +100,14 @@ func (h *companyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *companyHandler) Get(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
 		return
 	}
 
-	company, err := h.companyUseCase.GetByID(r.Context(), id)
+	company, err := h.companyUseCase.GetByID(ctx, id)
 	if err != nil {
 		errors.RespondWithError(w, err)
 		return
