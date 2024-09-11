@@ -39,6 +39,8 @@ func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case entity.ErrEmptyUsername, entity.ErrEmptyPassword:
 			errors.RespondWithError(w, errors.NewBadRequestError(err.Error()))
+		case entity.ErrUsernameTaken:
+			errors.RespondWithError(w, errors.NewBadRequestError("Username is already taken"))
 		default:
 			errors.RespondWithError(w, errors.NewInternalServerError("Failed to register user"))
 		}

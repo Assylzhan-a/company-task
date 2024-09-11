@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"errors"
+	"fmt"
 	"github.com/assylzhan-a/company-task/config"
 	"github.com/assylzhan-a/company-task/internal/domain/entity"
 	r "github.com/assylzhan-a/company-task/internal/ports/repository"
@@ -25,7 +27,14 @@ func (u *userUseCase) Register(username, password string) error {
 		return err
 	}
 
-	return u.userRepo.Create(user)
+	err = u.userRepo.Create(user)
+	if err != nil {
+		if errors.Is(err, entity.ErrUsernameTaken) {
+			return err
+		}
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+	return nil
 }
 
 func (u *userUseCase) Login(username, password string) (string, error) {

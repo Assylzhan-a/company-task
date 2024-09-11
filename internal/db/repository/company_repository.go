@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"log"
 )
 
 type companyRepo struct {
@@ -31,6 +32,7 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, company.ID, company.Name, company.Description, company.AmountOfEmployees, company.Registered, company.Type, company.CreatedAt, company.UpdatedAt)
 	if err != nil {
+		log.Print("Failed to insert into companies", err)
 		return errors.NewInternalServerError("Failed to create company")
 	}
 
@@ -40,6 +42,7 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4)
 	`, event.ID, event.EventType, event.Payload, event.CreatedAt)
 	if err != nil {
+		log.Print("Failed to insert into outbox_events", err)
 		return errors.NewInternalServerError("Failed to create outbox event")
 	}
 
@@ -64,6 +67,7 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 		WHERE id = $1
 	`, company.ID, company.Name, company.Description, company.AmountOfEmployees, company.Registered, company.Type, company.UpdatedAt)
 	if err != nil {
+		log.Print("Failed to update company", err)
 		return errors.NewInternalServerError("Failed to update company")
 	}
 
@@ -73,6 +77,7 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4)
 	`, event.ID, event.EventType, event.Payload, event.CreatedAt)
 	if err != nil {
+		log.Print("Failed to update outbox", err)
 		return errors.NewInternalServerError("Failed to create outbox event")
 	}
 
@@ -110,6 +115,7 @@ func (r *companyRepo) GetOutboxEvents(ctx context.Context, limit int) ([]*entity
 func (r *companyRepo) DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, "DELETE FROM outbox_events WHERE id = $1", id)
 	if err != nil {
+		log.Print("Failed to delete outbox", err)
 		return errors.NewInternalServerError("Failed to delete outbox event")
 	}
 	return nil
@@ -119,6 +125,7 @@ func (r *companyRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM companies WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
+		log.Print("Failed to delete company", err)
 		return errors.NewInternalServerError("Failed to delete company")
 	}
 	if result.RowsAffected() == 0 {
@@ -128,7 +135,7 @@ func (r *companyRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *companyRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Company, error) {
-	query := `SELECT * FROM companies WHERE id = $1`
+	query := `SELECT id, name, description, amount_of_employees, registered, type, created_at, updated_at  FROM companies WHERE id = $1`
 	var company entity.Company
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&company.ID, &company.Name, &company.Description, &company.AmountOfEmployees,
@@ -136,22 +143,6 @@ func (r *companyRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Compan
 	)
 	if err != nil {
 		if err.Error() == pgx.ErrNoRows.Error() {
-			return nil, errors.NewNotFoundError("Company not found")
-		}
-		return nil, errors.NewInternalServerError("Failed to get company")
-	}
-	return &company, nil
-}
-
-func (r *companyRepo) GetByName(ctx context.Context, name string) (*entity.Company, error) {
-	query := `SELECT * FROM companies WHERE name = $1`
-	var company entity.Company
-	err := r.pool.QueryRow(ctx, query, name).Scan(
-		&company.ID, &company.Name, &company.Description, &company.AmountOfEmployees,
-		&company.Registered, &company.Type, &company.CreatedAt, &company.UpdatedAt,
-	)
-	if err != nil {
-		if err.Error() == "no rows in result set" {
 			return nil, errors.NewNotFoundError("Company not found")
 		}
 		return nil, errors.NewInternalServerError("Failed to get company")
