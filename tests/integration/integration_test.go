@@ -33,14 +33,24 @@ var (
 
 func TestMain(m *testing.M) {
 	cfg := config.Load()
-	cfg.DatabaseURL = "postgres://user:password@localhost:5432/company_db?sslmode=disable"
+	cfg.DatabaseURL = os.Getenv("DATABASE_URL")
 
 	log := logger.NewLogger(cfg.LogLevel)
 
+	//waiting for the docker db to be ready before running
 	var err error
-	testDB, err = db.NewPostgresConnection(cfg.DatabaseURL, log)
+	var retries int
+	for retries < 5 {
+		testDB, err = db.NewPostgresConnection(cfg.DatabaseURL, log)
+		if err == nil {
+			break
+		}
+		log.Error("Failed to connect to test database, retrying...", "error", err)
+		time.Sleep(2 * time.Second)
+		retries++
+	}
 	if err != nil {
-		log.Error("Failed to connect to test database", "error", err)
+		log.Error("Failed to connect to test database after retries", "error", err)
 		os.Exit(1)
 	}
 

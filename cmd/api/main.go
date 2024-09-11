@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"github.com/assylzhan-a/company-task/config"
 	"github.com/assylzhan-a/company-task/internal/db/repository"
 	handler "github.com/assylzhan-a/company-task/internal/delivery/http"
@@ -27,10 +26,6 @@ func main() {
 	cfg := config.Load()
 	log := logger.NewLogger(cfg.LogLevel)
 
-	// Parse command line flags
-	migrateFlag := flag.Bool("migrate", false, "Run database migrations")
-	flag.Parse()
-
 	// Connect to the database
 	dbPool, err := db.NewPostgresConnection(cfg.DatabaseURL, log)
 	if err != nil {
@@ -39,15 +34,12 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	// Run migrations if the flag is set
-	if *migrateFlag {
-		if err := db.RunMigrations("../../migrations/", cfg.DatabaseURL); err != nil {
-			log.Error("Failed to run migrations", "error", err)
-			os.Exit(1)
-		}
-		log.Info("Migrations completed successfully")
-		return
+	// Run migrations
+	if err := db.RunMigrations("migrations", cfg.DatabaseURL); err != nil {
+		log.Error("Failed to run migrations", "error", err)
+		os.Exit(1)
 	}
+	log.Info("Migrations completed successfully")
 
 	r := chi.NewRouter()
 

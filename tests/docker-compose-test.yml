@@ -1,0 +1,20 @@
+services:
+  app_test:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile.test
+    depends_on:
+      - test_db
+    environment:
+      - DATABASE_URL=postgres://testuser:testpassword@test_db:5432/test_db?sslmode=disable
+    volumes:
+      - ..:/app
+
+  test_db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: test_db
+    ports:
+      - "5432:5432"

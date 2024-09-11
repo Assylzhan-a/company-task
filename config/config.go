@@ -19,7 +19,6 @@ type Config struct {
 
 func Load() Config {
 	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	return Config{
 		Environment:      viper.GetString("ENVIRONMENT"),
