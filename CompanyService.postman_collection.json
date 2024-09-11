@@ -1,0 +1,215 @@
+{
+	"info": {
+		"_postman_id": "8b7a5093-fb63-43a5-9799-79d5d361b1a8",
+		"name": "New Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20810001"
+	},
+	"item": [
+		{
+			"name": "RegisterUser",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"newuser\", \"password\": \"password123\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/users/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"users",
+						"register"
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://localhost:8080/v1/users/register \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"username\": \"newuser\", \"password\": \"password123\"}'"
+			},
+			"response": []
+		},
+		{
+			"name": "LoginUser",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"newuser\", \"password\": \"password123\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/users/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"users",
+						"login"
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://localhost:8080/v1/users/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"username\": \"newuser\", \"password\": \"password123\"}'"
+			},
+			"response": []
+		},
+		{
+			"name": "CreateCompany",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"name\": \"Tech Corp\",\n    \"description\": \"Innovative technology solutions\",\n    \"amount_of_employees\": 100,\n    \"registered\": true,\n    \"type\": \"Corporations\"\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/companies",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"companies"
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://localhost:8080/v1/companies \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer YOUR_JWT_TOKEN\" \\\n  -d '{\n    \"id\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"name\": \"Tech Corp\",\n    \"description\": \"Innovative technology solutions\",\n    \"amount_of_employees\": 100,\n    \"registered\": true,\n    \"type\": \"Corporations\"\n  }'"
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"companies",
+						"123e4567-e89b-12d3-a456-426614174000"
+					]
+				},
+				"description": "Generated from cURL: curl -X GET http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer YOUR_JWT_TOKEN\""
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Updated Tech Corp\",\n    \"amount_of_employees\": 150\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"companies",
+						"123e4567-e89b-12d3-a456-426614174000"
+					]
+				},
+				"description": "Generated from cURL: curl -X PATCH http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer YOUR_JWT_TOKEN\" \\\n  -d '{\n    \"name\": \"Updated Tech Corp\",\n    \"amount_of_employees\": 150\n  }'"
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YOUR_JWT_TOKEN"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"companies",
+						"123e4567-e89b-12d3-a456-426614174000"
+					]
+				},
+				"description": "Generated from cURL: curl -X DELETE http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer YOUR_JWT_TOKEN\""
+			},
+			"response": []
+		}
+	]
+}
