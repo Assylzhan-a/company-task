@@ -38,7 +38,6 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 	}
 	defer tx.Rollback(ctx)
 
-	// Insert company
 	_, err = tx.Exec(ctx, `
 		INSERT INTO companies (id, name, description, amount_of_employees, registered, type, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -51,7 +50,6 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 		return customError.NewInternalServerError("Failed to create company")
 	}
 
-	// Insert outbox event
 	_, err = tx.Exec(ctx, `
 		INSERT INTO outbox_events (id, event_type, payload, created_at)
 		VALUES ($1, $2, $3, $4)
@@ -77,7 +75,6 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 	}
 	defer tx.Rollback(ctx)
 
-	// Update company
 	_, err = tx.Exec(ctx, `
 		UPDATE companies
 		SET name = $2, description = $3, amount_of_employees = $4, registered = $5, type = $6, updated_at = $7
@@ -91,7 +88,6 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 		return customError.NewInternalServerError("Failed to update company")
 	}
 
-	// Insert outbox event
 	_, err = tx.Exec(ctx, `
 		INSERT INTO outbox_events (id, event_type, payload, created_at)
 		VALUES ($1, $2, $3, $4)
