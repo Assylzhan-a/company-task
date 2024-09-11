@@ -12,39 +12,20 @@ Key features:
 - PostgreSQL database for data persistence
 - Docker support for easy deployment and development
 
-## Table of Contents
-
-1. [Setup](#setup)
-2. [Running the Application](#running-the-application)
-3. [API Endpoints](#api-endpoints)
-4. [Testing](#testing)
-5. [Project Structure](#project-structure)
-
-## Setup
+## Quick Start
 
 1. Clone the repository:
    ```
-   git clone https://github.com/Assylzhan-a/company-task.git
-   cd company-task
+   git clone https://github.com/your-username/company-management-service.git
+   cd company-management-service
    ```
 
-2. Configuration:
-   To change the configuration, edit the `app.env` file in the root directory. Default env is already configured mirroring local docker setup confs.
-
-3. Run database migrations:
+2. Run the application:
    ```
-   make migrate-up
+   make run
    ```
 
-## Running the Application
-
-To start the application and its dependencies (PostgreSQL, Kafka, etc.), run:
-
-```
-make run
-```
-
-This command uses Docker Compose to set up and run all necessary services.
+That's it! The application and all its dependencies (PostgreSQL, Kafka, etc.) will start up using Docker Compose.
 
 ## API Endpoints
 
@@ -112,23 +93,16 @@ curl -X DELETE http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-## Testing
+## Additional Commands
 
-To run the test suite:
+- Run tests: `make test`
+- Run linter: `make lint`
+- Run database migrations: `make migrate-up`
+- Rollback database migrations: `make migrate-down`
 
-```
-make test
-```
+## Configuration
 
-This command uses a separate Docker Compose file for testing, ensuring a clean and isolated test environment.
-
-## Linting
-
-To run the linter:
-
-```
-make lint
-```
+To change the configuration, edit the `app.env` file in the root directory.
 
 ## Project Structure
 
@@ -160,5 +134,4 @@ make lint
 └── Makefile
 ```
 
-This structure follows clean architecture principles, separating concerns into different layers (delivery, domain, infrastructure) for improved maintainability and testability.
-
+This structure follows clean architecture principles, separating concerns into different layers for improved maintainability and testability.
