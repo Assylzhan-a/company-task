@@ -1,8 +1,9 @@
-package handler
+package http
 
 import (
 	"encoding/json"
-	"github.com/assylzhan-a/company-task/internal/company/domain"
+	"github.com/assylzhan-a/company-task/internal/domain/entity"
+	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -10,15 +11,15 @@ import (
 )
 
 type CompanyHandler struct {
-	useCase domain.CompanyUseCase
+	useCase uc.CompanyUseCase
 }
 
-func NewCompanyHandler(useCase domain.CompanyUseCase) *CompanyHandler {
+func NewCompanyHandler(useCase uc.CompanyUseCase) *CompanyHandler {
 	return &CompanyHandler{useCase: useCase}
 }
 
 func (h *CompanyHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var company domain.Company
+	var company entity.Company
 	if err := json.NewDecoder(r.Body).Decode(&company); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
 		return
@@ -45,7 +46,7 @@ func (h *CompanyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var patchCompany domain.PatchCompany
+	var patchCompany entity.PatchCompany
 	if err := json.NewDecoder(r.Body).Decode(&patchCompany); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
 		return

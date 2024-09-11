@@ -2,22 +2,23 @@ package repository
 
 import (
 	"context"
-	"github.com/assylzhan-a/company-task/internal/company/domain"
+	"github.com/assylzhan-a/company-task/internal/domain/entity"
+	r "github.com/assylzhan-a/company-task/internal/ports/repository"
 	"github.com/assylzhan-a/company-task/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-type postgresRepository struct {
+type companyRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewPostgresRepository(pool *pgxpool.Pool) domain.CompanyRepository {
-	return &postgresRepository{pool: pool}
+func NewPostgresRepository(pool *pgxpool.Pool) r.CompanyRepository {
+	return &companyRepo{pool: pool}
 }
 
-func (r *postgresRepository) CreateWithOutboxEvent(ctx context.Context, company *domain.Company, event *domain.OutboxEvent) error {
+func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity.Company, event *entity.OutboxEvent) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return errors.NewInternalServerError("Failed to begin transaction")
@@ -49,7 +50,7 @@ func (r *postgresRepository) CreateWithOutboxEvent(ctx context.Context, company 
 	return nil
 }
 
-func (r *postgresRepository) UpdateWithOutboxEvent(ctx context.Context, company *domain.Company, event *domain.OutboxEvent) error {
+func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity.Company, event *entity.OutboxEvent) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return errors.NewInternalServerError("Failed to begin transaction")
@@ -82,7 +83,7 @@ func (r *postgresRepository) UpdateWithOutboxEvent(ctx context.Context, company 
 	return nil
 }
 
-func (r *postgresRepository) GetOutboxEvents(ctx context.Context, limit int) ([]*domain.OutboxEvent, error) {
+func (r *companyRepo) GetOutboxEvents(ctx context.Context, limit int) ([]*entity.OutboxEvent, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, event_type, payload, created_at
 		FROM outbox_events
@@ -94,9 +95,9 @@ func (r *postgresRepository) GetOutboxEvents(ctx context.Context, limit int) ([]
 	}
 	defer rows.Close()
 
-	var events []*domain.OutboxEvent
+	var events []*entity.OutboxEvent
 	for rows.Next() {
-		var event domain.OutboxEvent
+		var event entity.OutboxEvent
 		if err := rows.Scan(&event.ID, &event.EventType, &event.Payload, &event.CreatedAt); err != nil {
 			return nil, errors.NewInternalServerError("Failed to scan outbox event")
 		}
@@ -106,7 +107,7 @@ func (r *postgresRepository) GetOutboxEvents(ctx context.Context, limit int) ([]
 	return events, nil
 }
 
-func (r *postgresRepository) DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error {
+func (r *companyRepo) DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, "DELETE FROM outbox_events WHERE id = $1", id)
 	if err != nil {
 		return errors.NewInternalServerError("Failed to delete outbox event")
@@ -114,7 +115,7 @@ func (r *postgresRepository) DeleteOutboxEvent(ctx context.Context, id uuid.UUID
 	return nil
 }
 
-func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *companyRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM companies WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
@@ -126,9 +127,9 @@ func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *postgresRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
+func (r *companyRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Company, error) {
 	query := `SELECT * FROM companies WHERE id = $1`
-	var company domain.Company
+	var company entity.Company
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&company.ID, &company.Name, &company.Description, &company.AmountOfEmployees,
 		&company.Registered, &company.Type, &company.CreatedAt, &company.UpdatedAt,
@@ -142,9 +143,9 @@ func (r *postgresRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain
 	return &company, nil
 }
 
-func (r *postgresRepository) GetByName(ctx context.Context, name string) (*domain.Company, error) {
+func (r *companyRepo) GetByName(ctx context.Context, name string) (*entity.Company, error) {
 	query := `SELECT * FROM companies WHERE name = $1`
-	var company domain.Company
+	var company entity.Company
 	err := r.pool.QueryRow(ctx, query, name).Scan(
 		&company.ID, &company.Name, &company.Description, &company.AmountOfEmployees,
 		&company.Registered, &company.Type, &company.CreatedAt, &company.UpdatedAt,

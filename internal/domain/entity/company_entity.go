@@ -1,7 +1,6 @@
-package domain
+package entity
 
 import (
-	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"time"
@@ -65,21 +64,4 @@ func (c *Company) Validate() error {
 
 func (pc *PatchCompany) Validate() error {
 	return validate.Struct(pc)
-}
-
-type CompanyRepository interface {
-	CreateWithOutboxEvent(ctx context.Context, company *Company, event *OutboxEvent) error
-	UpdateWithOutboxEvent(ctx context.Context, company *Company, event *OutboxEvent) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*Company, error)
-	GetByName(ctx context.Context, name string) (*Company, error)
-	GetOutboxEvents(ctx context.Context, limit int) ([]*OutboxEvent, error)
-	DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error
-}
-
-type CompanyUseCase interface {
-	Create(ctx context.Context, company *Company) error
-	Patch(ctx context.Context, id uuid.UUID, patch *PatchCompany) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	GetByID(ctx context.Context, id uuid.UUID) (*Company, error)
 }

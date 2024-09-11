@@ -1,4 +1,4 @@
-package domain
+package entity
 
 import (
 	"github.com/google/uuid"
@@ -9,16 +9,6 @@ type User struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
 	Password string    `json:"-"`
-}
-
-type UserRepository interface {
-	Create(user *User) error
-	GetByUsername(username string) (*User, error)
-}
-
-type UserUseCase interface {
-	Register(username, password string) error
-	Login(username, password string) (string, error)
 }
 
 func (u *User) ComparePassword(password string) error {

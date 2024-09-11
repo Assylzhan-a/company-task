@@ -3,22 +3,24 @@ package usecase
 import (
 	"context"
 	"encoding/json"
-	"github.com/assylzhan-a/company-task/internal/company/domain"
+	"github.com/assylzhan-a/company-task/internal/domain/entity"
+	r "github.com/assylzhan-a/company-task/internal/ports/repository"
+	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/logger"
 	"github.com/google/uuid"
 	"time"
 )
 
 type companyUseCase struct {
-	repo   domain.CompanyRepository
+	repo   r.CompanyRepository
 	logger *logger.Logger
 }
 
-func NewCompanyUseCase(repo domain.CompanyRepository, logger *logger.Logger) domain.CompanyUseCase {
+func NewCompanyUseCase(repo r.CompanyRepository, logger *logger.Logger) uc.CompanyUseCase {
 	return &companyUseCase{repo: repo, logger: logger}
 }
 
-func (uc *companyUseCase) Create(ctx context.Context, company *domain.Company) error {
+func (uc *companyUseCase) Create(ctx context.Context, company *entity.Company) error {
 	company.CreatedAt = time.Now()
 	company.UpdatedAt = time.Now()
 
@@ -27,7 +29,7 @@ func (uc *companyUseCase) Create(ctx context.Context, company *domain.Company) e
 		return err
 	}
 
-	event := &domain.OutboxEvent{
+	event := &entity.OutboxEvent{
 		ID:        uuid.New(),
 		EventType: "company_created",
 		Payload:   payload,
@@ -35,14 +37,14 @@ func (uc *companyUseCase) Create(ctx context.Context, company *domain.Company) e
 	}
 
 	if err := uc.repo.CreateWithOutboxEvent(ctx, company, event); err != nil {
-		uc.logger.Error("Failed to create company with outbox event", "error", err)
+		uc.logger.Error("Failed to create company with outbox event", "error", err, "companyID", company.ID)
 		return err
 	}
 
 	return nil
 }
 
-func (uc *companyUseCase) Patch(ctx context.Context, id uuid.UUID, patch *domain.PatchCompany) error {
+func (uc *companyUseCase) Patch(ctx context.Context, id uuid.UUID, patch *entity.PatchCompany) error {
 	company, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -71,7 +73,7 @@ func (uc *companyUseCase) Patch(ctx context.Context, id uuid.UUID, patch *domain
 		return err
 	}
 
-	event := &domain.OutboxEvent{
+	event := &entity.OutboxEvent{
 		ID:        uuid.New(),
 		EventType: "company_updated",
 		Payload:   payload,
@@ -90,6 +92,6 @@ func (uc *companyUseCase) Delete(ctx context.Context, id uuid.UUID) error {
 	return uc.repo.Delete(ctx, id)
 }
 
-func (uc *companyUseCase) GetByID(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
+func (uc *companyUseCase) GetByID(ctx context.Context, id uuid.UUID) (*entity.Company, error) {
 	return uc.repo.GetByID(ctx, id)
 }

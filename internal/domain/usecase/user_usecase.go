@@ -1,7 +1,9 @@
 package usecase
 
 import (
-	"github.com/assylzhan-a/company-task/internal/user/domain"
+	"github.com/assylzhan-a/company-task/internal/domain/entity"
+	r "github.com/assylzhan-a/company-task/internal/ports/repository"
+	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/config"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -10,10 +12,10 @@ import (
 )
 
 type userUseCase struct {
-	userRepo domain.UserRepository
+	userRepo r.UserRepository
 }
 
-func NewUserUseCase(userRepo domain.UserRepository) domain.UserUseCase {
+func NewUserUseCase(userRepo r.UserRepository) uc.UserUseCase {
 	return &userUseCase{
 		userRepo: userRepo,
 	}
@@ -25,7 +27,7 @@ func (u *userUseCase) Register(username, password string) error {
 		return err
 	}
 
-	user := &domain.User{
+	user := &entity.User{
 		ID:       uuid.New(),
 		Username: username,
 		Password: string(hashedPassword),

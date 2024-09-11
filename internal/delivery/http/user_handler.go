@@ -1,18 +1,18 @@
-package handler
+package http
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/assylzhan-a/company-task/internal/user/domain"
+	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/errors"
 )
 
 type UserHandler struct {
-	userUseCase domain.UserUseCase
+	userUseCase uc.UserUseCase
 }
 
-func NewUserHandler(userUseCase domain.UserUseCase) *UserHandler {
+func NewUserHandler(userUseCase uc.UserUseCase) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
 	}

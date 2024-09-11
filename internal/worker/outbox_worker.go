@@ -2,19 +2,19 @@ package worker
 
 import (
 	"context"
-	"github.com/assylzhan-a/company-task/internal/company/domain"
 	"github.com/assylzhan-a/company-task/internal/kafka"
+	r "github.com/assylzhan-a/company-task/internal/ports/repository"
 	"github.com/assylzhan-a/company-task/pkg/logger"
 	"time"
 )
 
 type OutboxWorker struct {
-	repo     domain.CompanyRepository
+	repo     r.CompanyRepository
 	producer *kafka.Producer
 	logger   *logger.Logger
 }
 
-func NewOutboxWorker(repo domain.CompanyRepository, producer *kafka.Producer, logger *logger.Logger) *OutboxWorker {
+func NewOutboxWorker(repo r.CompanyRepository, producer *kafka.Producer, logger *logger.Logger) *OutboxWorker {
 	return &OutboxWorker{
 		repo:     repo,
 		producer: producer,
