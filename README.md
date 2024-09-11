@@ -24,8 +24,9 @@ Key features:
    ```
    make run
    ```
+   
 
-That's it! The application and all its dependencies (PostgreSQL, Kafka, etc.) will start up using Docker Compose.
+The application and all its dependencies (PostgreSQL, Kafka, etc.) will start up using Docker Compose.
 
 ## API Endpoints
 
@@ -95,6 +96,7 @@ curl -X DELETE http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614
 
 ## Additional Commands
 
+- Docker-compose includes kafka UI to view messages, can be accessed via: http://localhost:8090 
 - Run tests: `make test`
 - Run linter: `make lint`
 - Run database migrations: `make migrate-up`
