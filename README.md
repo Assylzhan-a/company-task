@@ -110,6 +110,7 @@ curl -X DELETE http://localhost:8080/v1/companies/123e4567-e89b-12d3-a456-426614
 - Run linter: `make lint`
 - Run database migrations: `make migrate-up`
 - Rollback database migrations: `make migrate-down`
+- Postman collection is provided - CompanyService.postman_collection.json
 
 ## Configuration
 

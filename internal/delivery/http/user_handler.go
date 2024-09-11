@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/assylzhan-a/company-task/internal/domain/entity"
 	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
-	"github.com/assylzhan-a/company-task/pkg/errors"
+	customError "github.com/assylzhan-a/company-task/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -32,18 +32,18 @@ func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
+		customError.RespondWithError(w, customError.NewBadRequestError("Invalid request payload"))
 		return
 	}
 
 	if err := h.UserUseCase.Register(ctx, req.Username, req.Password); err != nil {
 		switch err {
 		case entity.ErrEmptyUsername, entity.ErrEmptyPassword:
-			errors.RespondWithError(w, errors.NewBadRequestError(err.Error()))
+			customError.RespondWithError(w, customError.NewBadRequestError(err.Error()))
 		case entity.ErrUsernameTaken:
-			errors.RespondWithError(w, errors.NewBadRequestError("Username is already taken"))
+			customError.RespondWithError(w, customError.NewBadRequestError("Username is already taken"))
 		default:
-			errors.RespondWithError(w, errors.NewInternalServerError("Failed to register user"))
+			customError.RespondWithError(w, customError.NewInternalServerError("Failed to register user"))
 		}
 		return
 	}
@@ -56,7 +56,7 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
+		customError.RespondWithError(w, customError.NewBadRequestError("Invalid request payload"))
 		return
 	}
 
@@ -64,9 +64,9 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case entity.ErrEmptyUsername, entity.ErrEmptyPassword, entity.ErrInvalidCredentials:
-			errors.RespondWithError(w, errors.NewUnauthorizedError(err.Error()))
+			customError.RespondWithError(w, customError.NewUnauthorizedError(err.Error()))
 		default:
-			errors.RespondWithError(w, errors.NewInternalServerError("Failed to log in"))
+			customError.RespondWithError(w, customError.NewInternalServerError("Failed to log in"))
 		}
 		return
 	}

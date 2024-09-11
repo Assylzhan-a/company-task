@@ -8,7 +8,6 @@ import (
 	handler "github.com/assylzhan-a/company-task/internal/delivery/http"
 	uc "github.com/assylzhan-a/company-task/internal/domain/usecase"
 	"github.com/assylzhan-a/company-task/pkg/logger"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,8 +45,6 @@ func main() {
 	//middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	// Prometheus' metrics endpoint
-	r.Handle("/metrics", promhttp.Handler())
 
 	// repositories
 	userRepo := repository.NewUserRepository(dbPool)

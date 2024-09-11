@@ -2,15 +2,19 @@ package repository
 
 import (
 	"context"
+	"github.com/jackc/pgconn"
 	"time"
 
 	"github.com/assylzhan-a/company-task/internal/domain/entity"
 	r "github.com/assylzhan-a/company-task/internal/ports/repository"
-	"github.com/assylzhan-a/company-task/pkg/errors"
+	customError "github.com/assylzhan-a/company-task/pkg/errors"
+	"github.com/go-errors/errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+const UniqueViolationCode = "23505"
 
 type companyRepo struct {
 	pool    *pgxpool.Pool
@@ -30,7 +34,7 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to begin transaction")
+		return customError.NewInternalServerError("Failed to begin transaction")
 	}
 	defer tx.Rollback(ctx)
 
@@ -40,7 +44,11 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, company.ID, company.Name, company.Description, company.AmountOfEmployees, company.Registered, company.Type, company.CreatedAt, company.UpdatedAt)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to create company")
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == UniqueViolationCode {
+			return customError.NewBadRequestError("Company with this name or ID already exists")
+		}
+		return customError.NewInternalServerError("Failed to create company")
 	}
 
 	// Insert outbox event
@@ -49,11 +57,11 @@ func (r *companyRepo) CreateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4)
 	`, event.ID, event.EventType, event.Payload, event.CreatedAt)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to create outbox event")
+		return customError.NewInternalServerError("Failed to create outbox event")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return errors.NewInternalServerError("Failed to commit transaction")
+		return customError.NewInternalServerError("Failed to commit transaction")
 	}
 
 	return nil
@@ -65,7 +73,7 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to begin transaction")
+		return customError.NewInternalServerError("Failed to begin transaction")
 	}
 	defer tx.Rollback(ctx)
 
@@ -76,7 +84,11 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 		WHERE id = $1
 	`, company.ID, company.Name, company.Description, company.AmountOfEmployees, company.Registered, company.Type, company.UpdatedAt)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to update company")
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == UniqueViolationCode {
+			return customError.NewBadRequestError("Company with this name already exists")
+		}
+		return customError.NewInternalServerError("Failed to update company")
 	}
 
 	// Insert outbox event
@@ -85,11 +97,11 @@ func (r *companyRepo) UpdateWithOutboxEvent(ctx context.Context, company *entity
 		VALUES ($1, $2, $3, $4)
 	`, event.ID, event.EventType, event.Payload, event.CreatedAt)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to create outbox event")
+		return customError.NewInternalServerError("Failed to create outbox event")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return errors.NewInternalServerError("Failed to commit transaction")
+		return customError.NewInternalServerError("Failed to commit transaction")
 	}
 
 	return nil
@@ -102,10 +114,10 @@ func (r *companyRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM companies WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to delete company")
+		return customError.NewInternalServerError("Failed to delete company")
 	}
 	if result.RowsAffected() == 0 {
-		return errors.NewNotFoundError("Company not found")
+		return customError.NewNotFoundError("Company not found")
 	}
 	return nil
 }
@@ -122,9 +134,9 @@ func (r *companyRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.Compan
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.NewNotFoundError("Company not found")
+			return nil, customError.NewNotFoundError("Company not found")
 		}
-		return nil, errors.NewInternalServerError("Failed to get company")
+		return nil, customError.NewInternalServerError("Failed to get company")
 	}
 	return &company, nil
 }
@@ -140,7 +152,7 @@ func (r *companyRepo) GetOutboxEvents(ctx context.Context, limit int) ([]*entity
 		LIMIT $1
 	`, limit)
 	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to get outbox events")
+		return nil, customError.NewInternalServerError("Failed to get outbox events")
 	}
 	defer rows.Close()
 
@@ -148,7 +160,7 @@ func (r *companyRepo) GetOutboxEvents(ctx context.Context, limit int) ([]*entity
 	for rows.Next() {
 		var event entity.OutboxEvent
 		if err := rows.Scan(&event.ID, &event.EventType, &event.Payload, &event.CreatedAt); err != nil {
-			return nil, errors.NewInternalServerError("Failed to scan outbox event")
+			return nil, customError.NewInternalServerError("Failed to scan outbox event")
 		}
 		events = append(events, &event)
 	}
@@ -162,7 +174,7 @@ func (r *companyRepo) DeleteOutboxEvent(ctx context.Context, id uuid.UUID) error
 
 	_, err := r.pool.Exec(ctx, "DELETE FROM outbox_events WHERE id = $1", id)
 	if err != nil {
-		return errors.NewInternalServerError("Failed to delete outbox event")
+		return customError.NewInternalServerError("Failed to delete outbox event")
 	}
 	return nil
 }
