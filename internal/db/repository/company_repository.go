@@ -14,7 +14,7 @@ type companyRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewPostgresRepository(pool *pgxpool.Pool) r.CompanyRepository {
+func NewCompanyRepository(pool *pgxpool.Pool) r.CompanyRepository {
 	return &companyRepo{pool: pool}
 }
 

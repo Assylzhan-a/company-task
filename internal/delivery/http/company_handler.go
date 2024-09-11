@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"github.com/assylzhan-a/company-task/internal/auth"
 	"github.com/assylzhan-a/company-task/internal/domain/entity"
 	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/errors"
@@ -10,15 +11,27 @@ import (
 	"net/http"
 )
 
-type CompanyHandler struct {
-	useCase uc.CompanyUseCase
+type companyHandler struct {
+	companyUseCase uc.CompanyUseCase
 }
 
-func NewCompanyHandler(useCase uc.CompanyUseCase) *CompanyHandler {
-	return &CompanyHandler{useCase: useCase}
+func NewCompanyHandler(r *chi.Mux, useCase uc.CompanyUseCase) {
+	handler := &companyHandler{
+		companyUseCase: useCase,
+	}
+	// Public route (getter)
+	r.Get("/v1/companies/{id}", handler.Get)
+
+	// Protected routes
+	r.Route("/v1/companies", func(r chi.Router) {
+		r.Use(auth.JWTAuth)
+		r.Post("/", handler.Create)
+		r.Patch("/{id}", handler.Patch)
+		r.Delete("/{id}", handler.Delete)
+	})
 }
 
-func (h *CompanyHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *companyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var company entity.Company
 	if err := json.NewDecoder(r.Body).Decode(&company); err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid request payload"))
@@ -30,7 +43,7 @@ func (h *CompanyHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.useCase.Create(r.Context(), &company); err != nil {
+	if err := h.companyUseCase.Create(r.Context(), &company); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -39,7 +52,7 @@ func (h *CompanyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(company)
 }
 
-func (h *CompanyHandler) Patch(w http.ResponseWriter, r *http.Request) {
+func (h *companyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
@@ -57,7 +70,7 @@ func (h *CompanyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.useCase.Patch(r.Context(), id, &patchCompany); err != nil {
+	if err := h.companyUseCase.Patch(r.Context(), id, &patchCompany); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -66,14 +79,14 @@ func (h *CompanyHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Company updated successfully"})
 }
 
-func (h *CompanyHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *companyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
 		return
 	}
 
-	if err := h.useCase.Delete(r.Context(), id); err != nil {
+	if err := h.companyUseCase.Delete(r.Context(), id); err != nil {
 		errors.RespondWithError(w, err)
 		return
 	}
@@ -81,14 +94,14 @@ func (h *CompanyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *CompanyHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *companyHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		errors.RespondWithError(w, errors.NewBadRequestError("Invalid company ID"))
 		return
 	}
 
-	company, err := h.useCase.GetByID(r.Context(), id)
+	company, err := h.companyUseCase.GetByID(r.Context(), id)
 	if err != nil {
 		errors.RespondWithError(w, err)
 		return

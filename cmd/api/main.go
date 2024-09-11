@@ -4,30 +4,27 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"github.com/assylzhan-a/company-task/config"
 	"github.com/assylzhan-a/company-task/internal/db/repository"
 	handler "github.com/assylzhan-a/company-task/internal/delivery/http"
 	uc "github.com/assylzhan-a/company-task/internal/domain/usecase"
 	"github.com/assylzhan-a/company-task/pkg/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/assylzhan-a/company-task/internal/auth"
 	"github.com/assylzhan-a/company-task/internal/db"
 	"github.com/assylzhan-a/company-task/internal/kafka"
 	"github.com/assylzhan-a/company-task/internal/worker"
-	"github.com/assylzhan-a/company-task/pkg/config"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
 	cfg := config.Load()
-
 	log := logger.NewLogger(cfg.LogLevel)
 
 	// Parse command line flags
@@ -52,47 +49,33 @@ func main() {
 		return
 	}
 
-	// Initialize repositories
-	companyRepo := repository.NewPostgresRepository(dbPool)
-	userRepo := repository.NewPostgresUserRepository(dbPool)
+	r := chi.NewRouter()
+
+	//middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	// Prometheus' metrics endpoint
+	r.Handle("/metrics", promhttp.Handler())
+
+	// repositories
+	userRepo := repository.NewUserRepository(dbPool)
+	companyRepo := repository.NewCompanyRepository(dbPool)
+
+	// use cases
+	userUseCase := uc.NewUserUseCase(userRepo)
+	companyUseCase := uc.NewCompanyUseCase(companyRepo, log)
+
+	// Initialize handlers
+	handler.NewUserHandler(r, userUseCase)
+	handler.NewCompanyHandler(r, companyUseCase)
 
 	// Initialize Kafka producer
 	kafkaProducer := kafka.NewProducer(cfg.KafkaBrokers, log)
 	defer kafkaProducer.Close()
 
-	// Initialize use cases
-	companyUseCase := uc.NewCompanyUseCase(companyRepo, log)
-	userUseCase := uc.NewUserUseCase(userRepo)
-
-	// Initialize handlers
-	companyHandler := handler.NewCompanyHandler(companyUseCase)
-	userHandler := handler.NewUserHandler(userUseCase)
-
 	// Initialize and start outbox worker
 	outboxWorker := worker.NewOutboxWorker(companyRepo, kafkaProducer, log)
 	go outboxWorker.Start(context.Background())
-
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	// User routes
-	r.Post("/register", userHandler.Register)
-	r.Post("/login", userHandler.Login)
-
-	// Public company route
-	r.Get("/api/v1/companies/{id}", companyHandler.Get)
-
-	// Protected company routes
-	r.Route("/api/v1/companies", func(r chi.Router) {
-		r.Use(auth.JWTAuth)
-		r.Post("/", companyHandler.Create)
-		r.Patch("/{id}", companyHandler.Patch)
-		r.Delete("/{id}", companyHandler.Delete)
-	})
-
-	// Prometheus metrics endpoint
-	r.Handle("/metrics", promhttp.Handler())
 
 	srv := &http.Server{
 		Addr:    cfg.ServerAddress,

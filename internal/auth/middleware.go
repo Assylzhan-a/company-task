@@ -2,11 +2,11 @@ package auth
 
 import (
 	"context"
+	"github.com/assylzhan-a/company-task/config"
 	"github.com/golang-jwt/jwt/v4"
 	"net/http"
 	"strings"
 
-	"github.com/assylzhan-a/company-task/pkg/config"
 	"github.com/assylzhan-a/company-task/pkg/errors"
 )
 
