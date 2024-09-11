@@ -30,22 +30,18 @@ func getLogLevel(logLevel string) slog.Level {
 	}
 }
 
-// Info logs an info level message
 func (l *Logger) Info(msg string, args ...any) {
 	l.Logger.Info(msg, args...)
 }
 
-// Error logs an error level message
 func (l *Logger) Error(msg string, args ...any) {
 	l.Logger.Error(msg, args...)
 }
 
-// Debug logs a debug level message
 func (l *Logger) Debug(msg string, args ...any) {
 	l.Logger.Debug(msg, args...)
 }
 
-// Warn logs a warn level message
 func (l *Logger) Warn(msg string, args ...any) {
 	l.Logger.Warn(msg, args...)
 }

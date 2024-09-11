@@ -10,11 +10,11 @@ import (
 
 type OutboxWorker struct {
 	repo     r.CompanyRepository
-	producer *kafka.Producer
+	producer kafka.Producer
 	logger   *logger.Logger
 }
 
-func NewOutboxWorker(repo r.CompanyRepository, producer *kafka.Producer, logger *logger.Logger) *OutboxWorker {
+func NewOutboxWorker(repo r.CompanyRepository, producer kafka.Producer, logger *logger.Logger) *OutboxWorker {
 	return &OutboxWorker{
 		repo:     repo,
 		producer: producer,
@@ -31,15 +31,15 @@ func (w *OutboxWorker) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := w.processOutboxEvents(ctx); err != nil {
+			if err := w.ProcessOutboxEvents(ctx); err != nil {
 				w.logger.Error("Failed to process outbox events", "error", err)
 			}
 		}
 	}
 }
 
-func (w *OutboxWorker) processOutboxEvents(ctx context.Context) error {
-	events, err := w.repo.GetOutboxEvents(ctx, 100) // Process 100 events at a time
+func (w *OutboxWorker) ProcessOutboxEvents(ctx context.Context) error {
+	events, err := w.repo.GetOutboxEvents(ctx, 100)
 	if err != nil {
 		return err
 	}

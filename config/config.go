@@ -1,8 +1,9 @@
 package config
 
 import (
-	"os"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -16,22 +17,18 @@ type Config struct {
 	OutboxWorkerTick string
 }
 
-func Load() *Config {
-	return &Config{
-		Environment:      getEnv("ENVIRONMENT", "development"),
-		DatabaseURL:      getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/company_db?sslmode=disable"),
-		ServerAddress:    getEnv("SERVER_ADDRESS", ":8080"),
-		JWTSecret:        getEnv("JWT_SECRET", "your-default-secret-key"),
-		LogLevel:         getEnv("LOG_LEVEL", "info"),
-		KafkaBrokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),
-		KafkaClientID:    getEnv("KAFKA_CLIENT_ID", "company-service"),
-		OutboxWorkerTick: getEnv("OUTBOX_WORKER_TICK", "5s"),
-	}
-}
+func Load() Config {
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	return Config{
+		Environment:      viper.GetString("ENVIRONMENT"),
+		DatabaseURL:      viper.GetString("DATABASE_URL"),
+		ServerAddress:    viper.GetString("SERVER_ADDRESS"),
+		JWTSecret:        viper.GetString("JWT_SECRET"),
+		LogLevel:         viper.GetString("LOG_LEVEL"),
+		KafkaBrokers:     strings.Split(viper.GetString("KAFKA_BROKERS"), ","),
+		KafkaClientID:    viper.GetString("KAFKA_CLIENT_ID"),
+		OutboxWorkerTick: viper.GetString("OUTBOX_WORKER_TICK"),
 	}
-	return defaultValue
 }

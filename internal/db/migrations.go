@@ -6,7 +6,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func RunMigrations(dbURL string) error {
+func RunMigrations(path string, dbURL string) error {
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return err
@@ -17,7 +17,7 @@ func RunMigrations(dbURL string) error {
 		return err
 	}
 
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(db, path); err != nil {
 		return err
 	}
 

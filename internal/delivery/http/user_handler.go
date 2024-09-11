@@ -2,11 +2,11 @@ package http
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"net/http"
-
+	"github.com/assylzhan-a/company-task/internal/domain/entity"
 	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/assylzhan-a/company-task/pkg/errors"
+	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
 type userRequest struct {
@@ -36,7 +36,12 @@ func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.UserUseCase.Register(req.Username, req.Password); err != nil {
-		errors.RespondWithError(w, errors.NewInternalServerError("Failed to register user"))
+		switch err {
+		case entity.ErrEmptyUsername, entity.ErrEmptyPassword:
+			errors.RespondWithError(w, errors.NewBadRequestError(err.Error()))
+		default:
+			errors.RespondWithError(w, errors.NewInternalServerError("Failed to register user"))
+		}
 		return
 	}
 
@@ -53,7 +58,12 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.UserUseCase.Login(req.Username, req.Password)
 	if err != nil {
-		errors.RespondWithError(w, errors.NewUnauthorizedError("Invalid username or password"))
+		switch err {
+		case entity.ErrEmptyUsername, entity.ErrEmptyPassword, entity.ErrInvalidCredentials:
+			errors.RespondWithError(w, errors.NewUnauthorizedError(err.Error()))
+		default:
+			errors.RespondWithError(w, errors.NewInternalServerError("Failed to log in"))
+		}
 		return
 	}
 

@@ -41,7 +41,7 @@ func main() {
 
 	// Run migrations if the flag is set
 	if *migrateFlag {
-		if err := db.RunMigrations(cfg.DatabaseURL); err != nil {
+		if err := db.RunMigrations("../../migrations/", cfg.DatabaseURL); err != nil {
 			log.Error("Failed to run migrations", "error", err)
 			os.Exit(1)
 		}

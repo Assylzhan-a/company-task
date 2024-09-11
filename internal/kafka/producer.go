@@ -6,13 +6,18 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Producer struct {
+type Producer interface {
+	Produce(ctx context.Context, topic string, key, value []byte) error
+	Close() error
+}
+
+type CompanyProducer struct {
 	writer *kafka.Writer
 	logger *logger.Logger
 }
 
-func NewProducer(brokers []string, logger *logger.Logger) *Producer {
-	return &Producer{
+func NewProducer(brokers []string, logger *logger.Logger) Producer {
+	return &CompanyProducer{
 		writer: &kafka.Writer{
 			Addr:     kafka.TCP(brokers...),
 			Balancer: &kafka.LeastBytes{},
@@ -21,7 +26,7 @@ func NewProducer(brokers []string, logger *logger.Logger) *Producer {
 	}
 }
 
-func (p *Producer) Produce(ctx context.Context, topic string, key, value []byte) error {
+func (p *CompanyProducer) Produce(ctx context.Context, topic string, key, value []byte) error {
 	message := kafka.Message{
 		Topic: topic,
 		Key:   key,
@@ -37,6 +42,6 @@ func (p *Producer) Produce(ctx context.Context, topic string, key, value []byte)
 	return nil
 }
 
-func (p *Producer) Close() error {
+func (p *CompanyProducer) Close() error {
 	return p.writer.Close()
 }

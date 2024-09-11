@@ -6,8 +6,6 @@ import (
 	r "github.com/assylzhan-a/company-task/internal/ports/repository"
 	uc "github.com/assylzhan-a/company-task/internal/ports/usecase"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -22,15 +20,9 @@ func NewUserUseCase(userRepo r.UserRepository) uc.UserUseCase {
 }
 
 func (u *userUseCase) Register(username, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user, err := entity.NewUser(username, password)
 	if err != nil {
 		return err
-	}
-
-	user := &entity.User{
-		ID:       uuid.New(),
-		Username: username,
-		Password: string(hashedPassword),
 	}
 
 	return u.userRepo.Create(user)
@@ -39,11 +31,11 @@ func (u *userUseCase) Register(username, password string) error {
 func (u *userUseCase) Login(username, password string) (string, error) {
 	user, err := u.userRepo.GetByUsername(username)
 	if err != nil {
-		return "", err
+		return "", entity.ErrInvalidCredentials
 	}
 
 	if err := user.ComparePassword(password); err != nil {
-		return "", err
+		return "", entity.ErrInvalidCredentials
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

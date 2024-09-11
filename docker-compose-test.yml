@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  app_test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      - test_db
+      - kafka_test
+      - kafka-setup
+    environment:
+      DATABASE_URL: postgres://testuser:testpassword@test_db:5432/test_db?sslmode=disable
+    volumes:
+      - ./logs:/root/logs
+    networks:
+      - test_network
+
+  test_db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: test_db
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - test_network
+
+  zookeeper_test:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - test_network
+
+  kafka_test:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper_test
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper_test:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_test:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - test_network
+
+  kafka-setup:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka_test
+    command: |
+      bash -c "
+        echo 'Waiting for Kafka to be ready...';
+        cub kafka-ready -b kafka_test:9092 1 30;
+        echo 'Creating Kafka topics...';
+        kafka-topics --create --if-not-exists --bootstrap-server kafka_test:9092 --partitions 1 --replication-factor 1 --topic company_created;
+        kafka-topics --create --if-not-exists --bootstrap-server kafka_test:9092 --partitions 1 --replication-factor 1 --topic company_updated;
+        echo 'Kafka topics created.'"
+    networks:
+      - test_network
+
+volumes:
+  postgres_test_data:
+
+networks:
+  test_network:
