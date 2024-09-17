@@ -22,8 +22,8 @@ This project is a Company Management Service built with Go, providing a RESTful 
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-username/company-management-service.git
-   cd company-management-service
+   git clone https://github.com/Assylzhan-a/company-task.git
+   cd company-task
    ```
 
 2. Run the application:
